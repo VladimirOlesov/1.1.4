@@ -2,13 +2,18 @@ package jm.task.core.jdbc.dao;
 
 import jm.task.core.jdbc.model.User;
 import jm.task.core.jdbc.util.Util;
+import org.hibernate.HibernateException;
 import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
+import org.hibernate.resource.transaction.spi.TransactionStatus;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class UserDaoHibernateImpl implements UserDao {
 
+    private final SessionFactory sessionFactory = Util.getSessionFactory();
 
     public UserDaoHibernateImpl() {
 
@@ -17,57 +22,91 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public void createUsersTable() {
-        Session session = Util.getSessionFactory().openSession();
-        Transaction transaction = session.beginTransaction();
-        session.createSQLQuery("CREATE TABLE IF NOT EXISTS users (Id INT NOT NULL AUTO_INCREMENT, " +
-                "name  varchar(45) NOT NULL, " +
-                "lastName varchar(45) NOT NULL, " +
-                "age INT NOT NULL, PRIMARY KEY (id))").addEntity(User.class).executeUpdate();
-        transaction.commit();
-        session.close();
+        Transaction transaction = null;
+        try (Session session = sessionFactory.openSession()) {
+            transaction = session.beginTransaction();
+            session.createSQLQuery("CREATE TABLE IF NOT EXISTS users (Id INT NOT NULL AUTO_INCREMENT, " +
+                    "name  varchar(45) NOT NULL, " +
+                    "lastName varchar(45) NOT NULL, " +
+                    "age INT NOT NULL, PRIMARY KEY (id))").addEntity(User.class).executeUpdate();
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null && (transaction.getStatus() == TransactionStatus.ACTIVE
+                    || transaction.getStatus() == TransactionStatus.MARKED_ROLLBACK)) {
+                transaction.rollback();
+            }
+        }
     }
 
     @Override
     public void dropUsersTable() {
-        Session session = Util.getSessionFactory().openSession();
-        Transaction transaction = session.beginTransaction();
-        session.createSQLQuery("DROP TABLE IF EXISTS users").addEntity(User.class).executeUpdate();
-        transaction.commit();
-        session.close();
+        Transaction transaction = null;
+        try (Session session = sessionFactory.openSession()) {
+            transaction = session.beginTransaction();
+            session.createSQLQuery("DROP TABLE IF EXISTS users").addEntity(User.class).executeUpdate();
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null && (transaction.getStatus() == TransactionStatus.ACTIVE
+                    || transaction.getStatus() == TransactionStatus.MARKED_ROLLBACK)) {
+                transaction.rollback();
+            }
+        }
     }
 
     @Override
     public void saveUser(String name, String lastName, byte age) {
-        Session session = Util.getSessionFactory().openSession();
-        Transaction transaction = session.beginTransaction();
-        session.save(new User(name, lastName, age));
-        transaction.commit();
-        System.out.println("User " + name + " added successfully");
-        session.close();
+        Transaction transaction = null;
+        try (Session session = sessionFactory.openSession()) {
+            transaction = session.beginTransaction();
+            session.save(new User(name, lastName, age));
+            transaction.commit();
+            System.out.println("User " + name + " added successfully");
+        } catch (Exception e) {
+            if (transaction != null && (transaction.getStatus() == TransactionStatus.ACTIVE
+                    || transaction.getStatus() == TransactionStatus.MARKED_ROLLBACK)) {
+                transaction.rollback();
+            }
+        }
     }
 
     @Override
     public void removeUserById(long id) {
-        Session session = Util.getSessionFactory().openSession();
-        Transaction transaction = session.beginTransaction();
-        session.createQuery("DELETE FROM User WHERE id = :id").setParameter("id", id).executeUpdate();
-        transaction.commit();
-        session.close();
+        Transaction transaction = null;
+        try (Session session = sessionFactory.openSession()) {
+            transaction = session.beginTransaction();
+            session.createQuery("DELETE FROM User WHERE id = :id").setParameter("id", id).executeUpdate();
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null && (transaction.getStatus() == TransactionStatus.ACTIVE
+                    || transaction.getStatus() == TransactionStatus.MARKED_ROLLBACK)) {
+                transaction.rollback();
+            }
+        }
     }
 
     @Override
     public List<User> getAllUsers() {
-        Session session = Util.getSessionFactory().openSession();
-        return (List<User>) session.createQuery("FROM User").list();
+        List<User> user = new ArrayList<>();
+        try (Session session = sessionFactory.openSession()) {
+            user = (List<User>) session.createQuery("FROM User").list();
+        } catch (Exception ignored) {
+        }
+        return user;
     }
 
 
     @Override
     public void cleanUsersTable() {
-        Session session = Util.getSessionFactory().openSession();
-        Transaction transaction = session.beginTransaction();
-        session.createQuery("DELETE FROM User").executeUpdate();
-        transaction.commit();
-        session.close();
+        Transaction transaction = null;
+        try (Session session = sessionFactory.openSession()) {
+            transaction = session.beginTransaction();
+            session.createQuery("DELETE FROM User").executeUpdate();
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null && (transaction.getStatus() == TransactionStatus.ACTIVE
+                    || transaction.getStatus() == TransactionStatus.MARKED_ROLLBACK)) {
+                transaction.rollback();
+            }
+        }
     }
 }

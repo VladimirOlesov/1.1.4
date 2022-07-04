@@ -7,6 +7,7 @@ import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
 import org.hibernate.service.ServiceRegistry;
 
+import java.sql.SQLException;
 import java.util.Properties;
 
 
@@ -34,5 +35,13 @@ public class Util {
             }
         }
         return sessionFactory;
+    }
+
+    public static void close() {
+        try {
+            getSessionFactory().close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
