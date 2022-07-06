@@ -2,7 +2,6 @@ package jm.task.core.jdbc.dao;
 
 import jm.task.core.jdbc.model.User;
 import jm.task.core.jdbc.util.Util;
-import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
@@ -42,6 +41,7 @@ public class UserDaoHibernateImpl implements UserDao {
     public void dropUsersTable() {
         Transaction transaction = null;
         try (Session session = sessionFactory.openSession()) {
+
             transaction = session.beginTransaction();
             session.createSQLQuery("DROP TABLE IF EXISTS users").addEntity(User.class).executeUpdate();
             transaction.commit();
@@ -74,7 +74,7 @@ public class UserDaoHibernateImpl implements UserDao {
         Transaction transaction = null;
         try (Session session = sessionFactory.openSession()) {
             transaction = session.beginTransaction();
-            session.createQuery("DELETE FROM User WHERE id = :id").setParameter("id", id).executeUpdate();
+            session.delete(session.load(User.class, id));
             transaction.commit();
         } catch (Exception e) {
             if (transaction != null && (transaction.getStatus() == TransactionStatus.ACTIVE
